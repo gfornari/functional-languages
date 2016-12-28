@@ -51,7 +51,7 @@ pop1 :: ST Char
 pop1 = S (\(x:xs) -> (x, xs))
 
 push1 :: ST ()
-push1 = S (\s -> ((), ')':xs))
+push1 = S (\s -> ((), ')':s))
 
 check_par1 :: [Char] -> ST Bool
 check_par1 [] = S (\s -> (null s, s))
