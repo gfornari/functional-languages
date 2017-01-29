@@ -7,9 +7,9 @@ showResults p = do
     let x = vars p
         y = ttables x
         z = solutions p y
-    putStrLn (show  x)
-    putStrLn (show  y)
-    putStrLn (show  z)
+    print x
+    print y
+    print z
 
 main :: IO ()
 main = do
