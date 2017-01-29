@@ -1,18 +1,22 @@
 {-# OPTIONS_GHC -Wall #-}
 
 
-{- Exercise 1 -}
--- import GHC.base hiding (((->) r))
+{- Exercise 1
+Define an instance of the Monad class for the type (a ->) .
+Remember that one has to write, instance Monad ((->)a) where...
 
--- instance Applicative ((->) r) where  
---     pure x = (\_ -> x)
---     g <*> m = \x -> g x (m x)
-
--- instance Monad ((->) r) where  
---     return x = \_ -> x  
---     f >>= k = \w -> k (f w) w  
+Note: This code is comment otherwise the the module doee not compile due to
+duplicate instance declarations.
 
 
+instance Applicative ((->) r) where  
+    pure x = (\_ -> x)
+    g <*> m = \x -> g x (m x)
+
+instance Monad ((->) r) where  
+    return x = \_ -> x  
+    f >>= k = \w -> k (f w) w  
+-}
 
 {- Exercise 2
 Given the following type of expressions
@@ -40,23 +44,37 @@ instance Monad Expr where
     (Val n) >>= _ = Val n
     (Add a b) >>= f = Add (a >>= f) (b >>= f)
 
-{- The >>= operator takes a (Expr a) value and a function of type (a -> Expr
-b) and apply the function to the (Expr a).
-
-The do notation used in the evalInt example is the same as:
-
-evalInt ex1 >>= \a ->
-evalInt ex2 >>= \b ->
-return (a + b)
+{-
+The >>= operator takes a (Expr a) value and a function of type (a -> Expr b)
+and apply the function to the (Expr a). The values (i.e. the data constructed
+with Val) are not affected by the functions.
 -}
 
-evalInt :: Expr Int -> Expr Int
-evalInt (Var a) = Var a
-evalInt (Val n) = Val n
-evalInt (Add ex1 ex2) = do
-    a <- evalInt ex1
-    b <- evalInt ex2
-    return (a + b)
+{- In the example1, we append the " world!" string only to the Var, without
+changing the Val.
+
+The output of example1 is:
+
+Add (Add (Var "Hello world!") (Var "Hello world!")) (Val 42)
+-}
+example1 :: Expr String
+example1 = (Add (Add (Var "Hello") (Var "Hello")) (Val 42)) >>= (\x -> pure (x ++ " world!"))
+
+{- In the example2, we count the length if the strings and replace the value
+of each Var with a Maybe Int, again without changing the Val. The
+lengthIfNotZero function symply returns Nothing if the string is empty, Just
+x, with x value of the function call "length" on the input string, otherwise.
+
+The output of example2 is:
+
+Add (Add (Var (Just 5)) (Var Nothing)) (Val 42)
+-}
+lengthIfNotZero :: String -> Maybe Int
+lengthIfNotZero [] = Nothing
+lengthIfNotZero s = Just (length s)
+
+example2 :: Expr (Maybe Int)
+example2 = (Add (Add (Var "Hello") (Var "")) (Val 42)) >>= (\x -> pure (lengthIfNotZero x))
 
 {- Exercise 3
 Definition of the Functor and Applicative instances of ST, using the do
@@ -83,7 +101,3 @@ instance Applicative ST where
 instance Monad ST where
     st >>= f = S(\s ->
         let (x,s') = app st s in app (f x) s')
-
-
--- main :: IO ()
--- main = putStrLn "Nothing to show here..."
