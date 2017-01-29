@@ -1,0 +1,376 @@
+\documentclass[12pt]{article}
+ 
+\usepackage[english]{babel}
+\usepackage[margin=1in]{geometry}
+\usepackage{verbatim}
+\usepackage{amsmath,amsthm,amssymb,amsfonts}
+
+% be aware of the \verb here and there in the code
+\newenvironment{code}{\endgraf\verbatim}{\endverbatim}
+
+% source: https://www.overleaf.com/latex/templates/homework-template/bxzrgjkwjpwc
+\newenvironment{problem}[2][Problem]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+
+\title{Reasoning about programs}
+\author{Giacomo Fornari}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+
+\begin{problem}{1}
+Using the definition
+
+\begin{code}
+[] ++ ys = ys
+(x:xs) + ys = x : (xs ++ ys)
+\end{code}
+
+verify the following two properties, by induction on \verb|xs|:
+
+\begin{code}
+xs ++ [] = xs
+xs ++ (ys ++ zs) = (xs ++ ys) ++ zs
+\end{code}
+\end{problem}
+
+
+\begin{proof}[Proof of first property]
+Base case:
+
+\begin{code}
+  [] ++ []
+=   { apply ++ }
+  []
+\end{code}
+
+Inductive case:
+
+\begin{code}
+  (x:xs) ++ []
+=   { apply ++ }
+  x:(xs ++ [])
+=   { induction hypothesis }
+  x:xs
+\end{code}
+\end{proof}
+
+
+\begin{proof}[Proof of second property]
+Base case:
+
+\begin{code}
+  [] ++ (ys ++ zs)
+=   { apply ++ }
+  ys ++ zs
+=   { unapply ++ }
+  ([] ++ ys) ++ zs
+\end{code}
+
+Inductive case:
+
+\begin{code}
+  (x:xs) ++ (ys ++ zs)
+=   { apply ++ }
+  x:(xs ++ (ys ++ zs))
+=   { induction hypothesis }
+  x:((xs ++ ys) ++ zs)
+=   { unapply ++ }
+  (x:(xs ++ ys)) ++ zs
+=   { unapply ++ }
+  ((x:xs) ++ ys) ++ zs
+\end{code}
+\end{proof}
+
+
+\begin{problem}{2}
+Show that
+
+\begin{code}
+exec (c ++ d) s = exec d (exec c s)
+\end{code}
+
+where \verb|exec| is the function that executes the code consisting of sequences of \verb|PUSH n| and \verb|ADD| operations.
+\end{problem}
+
+\begin{proof}
+Base case:
+
+\begin{code}
+  exec ([] ++ d) s
+=   { apply ++ }
+  exec d s
+=   { unapply exec }
+  exec d ( exec [] s)
+\end{code}
+
+Inductive case of \verb|PUSH n|:
+
+\begin{code}
+  exec ((PUSH n:c) ++ d) s
+=   { apply ++ }
+  exec (c ++ d) (n:s)
+=   { induction hypothesis }
+  exec d (exec c (n:s))
+=   { unapply inner exec }
+  exec d (exec (PUSH n:c) s)
+\end{code}
+
+Inductive case of \verb|ADD|:
+
+\begin{code}
+  exec ((ADD:c) ++ d) (m:n:s)
+=   { apply ++ }
+  exec (ADD:(c ++ d)) (m:n:s)
+=   { apply exec }
+  exec (c ++ d) (n+m:s)
+=   { induction hypothesis }
+  exec d (exec c (n+m:s))
+=   { unapply inner exec }
+  exec d (exec (ADD:c) (m:n:s))
+\end{code}
+\end{proof}
+
+
+\begin{problem}{3}
+Given the type and instance declarations below, verify the functor laws for the Tree type, by induction on trees.
+
+\begin{code}
+data Tree a = Leaf a | Node (Tree a) (Tree a)
+
+instance Functor Tree where
+    --fmap :: (a-> b) -> Tree a -> Tree b
+    fmap g (Leaf x) = Leaf (g x)
+    fmap g (Node l r) = Node (fmap g l) (fmap g r)
+\end{code}
+\end{problem}
+
+\begin{proof}[Proof of the first law]
+Let's prove that \verb|fmap id = id| holds. We have two different cases: the base case with \verb|Leaf x| and the inductive case with \verb|Node l r|.
+
+Base case:
+
+\begin{code}
+  fmap id (Leaf x)
+=   { apply fmap }
+  Leaf (id x)
+=   { apply id }
+  Leaf x
+=   { unapply id }
+  id (Leaf x)
+\end{code}
+
+Inductive case:
+
+\begin{code}
+  fmap id (Node l r)
+=   { apply fmap }
+  Node (fmap id l) (fmap id r)
+=   { induction hypothesis }
+  Node (id l) (id r)
+=   { apply id }
+  Node l r
+=   { unapply id }
+  id (Node l r)
+\end{code}
+\end{proof}
+
+\begin{proof}[Proof of the second law]
+For the second law, we have to prove that \verb|fmap (g . f) = fmap g . fmap f|. We have the same two cases as for the proof of the first law.
+
+Base case:
+
+\begin{code}
+  fmap (g . f) (Leaf x)
+=   { apply fmap }
+  Leaf ((g . f) x)
+=   { apply . }
+  Leaf (g (f x))
+=   { unapply fmap }
+  fmap g (Leaf (f x))
+=   { unapply fmap }
+  fmap g (fmap f (Leaf x))
+=   { unapply . }
+  (fmap g . fmap f) (Leaf x)
+\end{code}
+
+Inductive case:
+
+\begin{code}
+  fmap (g . f) (Node l r)
+=   { apply fmap }
+  Node (fmap (g . f) l) (fmap (g . f) r)
+=   { induction hypothesis }
+  Node ((fmap g . fmap f) l) ((fmap g . fmap f) r)
+=   { apply . }
+  Node (fmap (g (fmap f)) l) (fmap (g (fmap f)) r)
+=   { unapply outer fmap }
+  fmap (g (fmap f)) (Node l r)
+=   { unapply . }
+  (fmap g . fmap f) (Node l r)
+\end{code}
+\end{proof}
+
+
+\begin{problem}{4}
+Verify the applicative law for the \verb|Maybe| type.
+\end{problem}
+
+\begin{proof}[Proof of the first law]
+We want to prove that \verb|pure id <*> x = x| holds for \verb|Maybe|.
+
+\verb|Nothing| case:
+
+\begin{code}
+  pure id <*> Nothing
+=   { apply pure }
+  (Just id) <*> Nothing
+=   { apply <*> }
+  fmap id Nothing
+=   { apply fmap }
+  Nothing
+\end{code}
+
+\verb|Just x| case:
+
+\begin{code}
+  pure id <*> (Just x)
+=   { apply pure }
+  (Just id) <*> (Just x)
+=   { apply <*> }
+  fmap id (Just x)
+=   { apply fmap }
+  Just (id x)
+=   { apply id }
+  Just x
+\end{code}
+\end{proof}
+
+\begin{proof}[Proof of the second law]
+We want to prove that \verb|pure (g x) = pure g <*> pure x| holds for \verb|Maybe|.
+
+\begin{code}
+  pure (g x)
+=   { apply pure }
+  Just (g x)
+=   { unapply fmap }
+  fmap g (Just x)
+=   { unapply <*> }
+  (Just g) <*> (Just x)
+=   { unapply pure }
+  pure g <*> pure x
+\end{code}
+\end{proof}
+
+\begin{proof}[Proof of the third law]
+We want to prove that \verb|x <*> pure y = pure (\g -> g y) <*> x| holds for \verb|Maybe|.
+
+\verb|Nothing| case:
+
+
+% TODO Not concluded. See http://umairsaeed.com/blog/2016/01/05/applicative-laws-for-maybe-type/
+\begin{code}
+  Nothing <*> pure y
+=   { apply <*> }
+  Nothing
+=   { unapply fmap }
+  fmap h Nothing
+=   { unapply <*> }
+  (Just h) <*> Nothing
+=   { unapply pure }
+  pure h <*> Nothing
+-- TODO
+\end{code}
+
+\verb|Just x| case:
+
+\begin{code}
+  (Just x) <*> pure y
+=   { apply pure }
+  (Just x) <*> (Just y)
+=   { apply <*> }
+  fmap x (Just y)
+=   { apply fmap }
+  Just (x y)
+=   { rewrite (x y) using application on a lambda expression }
+  Just ((\g -> g y) x)
+=   { unapply fmap }
+  fmap (\g -> g y) (Just x)
+=   { unapply <*> }
+  (Just (\g -> g y)) <*> (Just x)
+=   { unapply pure }
+  pure (\g -> g y) <*> (Just x)
+\end{code}
+\end{proof}
+
+\begin{proof}[Proof of the fourth law]
+We want to prove that \verb|x <*> (y <*> z) = (pure (.) <*> x <*> y) <*> z| holds for \verb|Maybe|.
+
+\verb|Nothing| case:
+
+\begin{code}
+  Nothing <*> (y <*> z)
+=   { apply  }
+-- TODO
+\end{code}
+\end{proof}
+
+
+\begin{problem}{5}
+Given the equation \verb|comp' e c = comp e ++ c|, show how to construct the recursive definition for \verb|comp'| by induction on \verb|e|.
+\end{problem}
+
+\begin{proof}
+The problem is equal to the "vanishing of append". We recall the definition of the \verb|comp| function:
+
+\begin{code}
+comp :: Expr -> Code
+comp (Val n) = [PUSH n]
+comp (Add x y) = comp x ++ comp y ++ [ADD]
+\end{code}
+
+Base case:
+
+\begin{code}
+  comp' (Val n) c
+=   { specification of comp' }
+  comp (Val n) ++ c
+=   { apply comp }
+  [PUSH n] ++ c
+=   { apply ++ }
+  (PUSH n):c
+\end{code}
+
+Inductive case:
+
+\begin{code}
+  comp' (Add x y) c
+=   { specification of comp' }
+  comp (Add x y) ++ c
+=   { apply comp }
+  comp x ++ comp y ++ [ADD] ++ c
+=   { associativity of ++ }
+  comp x ++ (comp y ++ [ADD] ++ c)
+=   { associativity of ++ }
+  comp x ++ (comp y ++ ([ADD] ++ c))
+=   { apply inner ++}
+  comp x ++ (comp y ++ (ADD:c))
+=   { induction hypothesis on inner comp }
+  comp x ++ (comp' y (ADD:c))
+=   { induction hypothesis }
+  comp' x (comp' y (ADD:c))
+\end{code}
+
+Concluding, by induction on \verb|e|, we can construct the definition
+
+\begin{code}
+comp' :: Expr -> Code -> Code
+comp' (Val n) c = (PUSH n):c
+comp' (Add x y) c = comp' x (comp' y (ADD:c))
+\end{code} 
+\end{proof}
+
+\end{document}
