@@ -5,7 +5,7 @@
 Define an instance of the Monad class for the type (a ->) .
 Remember that one has to write, instance Monad ((->)a) where...
 
-Note: This code is comment otherwise the the module doee not compile due to
+Note: This code is comment otherwise the module does not compile due to
 duplicate instance declarations.
 
 instance Functor ((->) r) where
@@ -64,7 +64,7 @@ example1 = (Add (Add (Var "Hello") (Var "Hello")) (Val 42)) >>= (\x -> pure (x +
 
 {- In the example2, we count the length if the strings and replace the value
 of each Var with a Maybe Int, again without changing the Val. The
-lengthIfNotZero function symply returns Nothing if the string is empty, Just
+lengthIfNotZero function simply returns Nothing if the string is empty, Just
 x, with x value of the function call "length" on the input string, otherwise.
 
 The output of example2 is:
