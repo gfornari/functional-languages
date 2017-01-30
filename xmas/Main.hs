@@ -152,7 +152,9 @@ is assumed to associate to the left. -}
 
 {- a. Translate this description directly into a grammar.
 
-expr ::= expr - nat | nat
+expr ::= term + expr | expr - term | term
+term ::= factor * term | factor
+factor ::= (expr) | nat
 nat ::= 0 | 1 | 2 | ...
 -}
 
@@ -160,12 +162,38 @@ nat ::= 0 | 1 | 2 | ...
 
 expr3 :: Parser Int
 expr3 = do
-    n <- natural
+    t <- term3
     do
-        _ <- symbol "-"
+        _ <- symbol "+"
         e <- expr3
-        return (n - e)
-        <|> return n
+        return (t + e)
+        <|> do
+            e <- expr3
+            do
+                _ <- symbol "-"
+                t <- term3
+                return (e - t)
+                <|> term3
+
+
+term3 :: Parser Int
+term3 = do
+    f <- factor3
+    do
+        _ <- symbol "*"
+        t <- term3
+        return (f * t)
+        <|> return f
+
+factor3 :: Parser Int
+factor3 = do
+    _ <- symbol "("
+    e <- expr3
+    _ <- symbol ")"
+    return e
+    <|> do
+        n <- natural
+        return n
 
 
 {- Exercise 4. Define an expression fibs :: [Integer] that generates the
