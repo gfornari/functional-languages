@@ -8,13 +8,15 @@ Remember that one has to write, instance Monad ((->)a) where...
 Note: This code is comment otherwise the the module doee not compile due to
 duplicate instance declarations.
 
+instance Functor ((->) r) where
+    fmap = (.)
 
 instance Applicative ((->) r) where  
     pure x = (\_ -> x)
     g <*> m = \x -> g x (m x)
 
 instance Monad ((->) r) where  
-    return x = \_ -> x  
+    return = pure
     f >>= k = \w -> k (f w) w  
 -}
 
