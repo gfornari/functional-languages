@@ -338,9 +338,30 @@ We want to prove that \verb|x <*> (y <*> z) = (pure (.) <*> x <*> y) <*> z| hold
   Nothing <*> (y <*> z)
 \end{code}
 
-\verb|Just x| case:
+In the next case we assume that \verb|x|, \verb|y| and \verb|z| are \verb|Just|:
 
 \begin{code}
+  (Just x) <*> ((Just y) <*> (Just z))
+=   { apply inner <*> }
+  (Just x) <*> (fmap y (Just z))
+=   { apply <*> }
+  fmap x (fmap y (Just z))
+=   { unapply . }
+  (fmap x . fmap y) (Just z)
+=   { unapply the second Functor law }
+  fmap (x . y) (Just z)
+=   { unapply <*> }
+  (Just (x . y)) <*> (Just z)
+=   { unapply fmap }
+  (fmap (x .) y) <*> (Just z)
+=   { unapply <*> }
+  ((Just (x .)) <*> y) <*> (Just z)
+=   { unapply fmap }
+  (fmap (.) (Just x) <*> y) <*> (Just z)
+=   { unapply <*> }
+  ((Just (.)) <*> (Just x) <*> (Just y)) <*> (Just z)
+=   { unapply first pure }
+  (pure (.) <*> (Just x) <*> (Just y)) <*> (Just z)
 \end{code}
 \end{proof}
 
