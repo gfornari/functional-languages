@@ -66,7 +66,7 @@ Base case:
   [] ++ (ys ++ zs)
 =   { apply ++ }
   ys ++ zs
-=   { unapply ++ }
+=   { unapply inner ++ }
   ([] ++ ys) ++ zs
 \end{code}
 
@@ -112,6 +112,8 @@ Inductive case of \verb|PUSH n|:
 \begin{code}
   exec ((PUSH n:c) ++ d) s
 =   { apply ++ }
+  exec ((PUSH n):(c ++ d)) s
+=   { apply exec }
   exec (c ++ d) (n:s)
 =   { induction hypothesis }
   exec d (exec c (n:s))
@@ -119,7 +121,7 @@ Inductive case of \verb|PUSH n|:
   exec d (exec (PUSH n:c) s)
 \end{code}
 
-Inductive case of \verb|ADD|:
+Inductive case of \verb|ADD| (we assume that the stack is composed by at least two elements, because otherwise it is not well-formed):
 
 \begin{code}
   exec ((ADD:c) ++ d) (m:n:s)
@@ -206,9 +208,11 @@ Inductive case:
 =   { induction hypothesis }
   Node ((fmap g . fmap f) l) ((fmap g . fmap f) r)
 =   { apply . }
-  Node (fmap (g (fmap f)) l) (fmap (g (fmap f)) r)
+  Node (fmap g (fmap f l)) (fmap g (fmap f r))
 =   { unapply outer fmap }
-  fmap (g (fmap f)) (Node l r)
+  fmap g (Node (fmap f l) (fmap f r))
+=   { unapply inner fmap }
+  fmap g (fmap f (Node l r)) 
 =   { unapply . }
   (fmap g . fmap f) (Node l r)
 \end{code}
@@ -268,22 +272,33 @@ We want to prove that \verb|pure (g x) = pure g <*> pure x| holds for \verb|Mayb
 \begin{proof}[Proof of the third law]
 We want to prove that \verb|x <*> pure y = pure (\g -> g y) <*> x| holds for \verb|Maybe|.
 
+In order to prove the \verb|Nothing| case, we prove that
+
+\begin{code}
+x <*> Nothing = Nothing
+\end{code}
+
+\begin{proof}[Lemma] \verb|x <*> Nothing = Nothing|
+
 \verb|Nothing| case:
 
-
-% TODO Not concluded. See http://umairsaeed.com/blog/2016/01/05/applicative-laws-for-maybe-type/
 \begin{code}
-  Nothing <*> pure y
-=   { apply <*> }
-  Nothing
-=   { unapply fmap }
-  fmap h Nothing
-=   { unapply <*> }
-  (Just h) <*> Nothing
-=   { unapply pure }
-  pure h <*> Nothing
--- TODO
+  Nothing <*> Nothing = Nothing
 \end{code}
+
+\verb|Just g| case:
+
+\begin{code}
+  (Just g) <*> Nothing
+=   { apply <*> }
+  fmap g Nothing
+=   { apply fmap }
+  Nothing
+\end{code}
+\end{proof}
+
+We can conclude that \verb|Nothing <*> _ = _ <*> Nothing = Nothing| because of the \emph{Lemma} just proved. Therefore, the \verb|Nothing| case for the third law is demonstrated.
+
 
 \verb|Just x| case:
 
@@ -312,9 +327,20 @@ We want to prove that \verb|x <*> (y <*> z) = (pure (.) <*> x <*> y) <*> z| hold
 \verb|Nothing| case:
 
 \begin{code}
+  (pure (.) <*> Nothing <*> y) <*> z
+=   { apply inner right most <*> }
+  (pure (.) <*> Nothing) <*> z
+=   { lemma on inner <*> }
+  Nothing <*> z
+=   { apply <*> }
+  Nothing
+=   { unapply <*> }
   Nothing <*> (y <*> z)
-=   { apply  }
--- TODO
+\end{code}
+
+\verb|Just x| case:
+
+\begin{code}
 \end{code}
 \end{proof}
 
