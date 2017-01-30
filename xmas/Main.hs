@@ -152,9 +152,7 @@ is assumed to associate to the left. -}
 
 {- a. Translate this description directly into a grammar.
 
-expr ::= term + expr | expr - term | term
-term ::= factor * term | factor
-factor ::= (expr) | nat
+expr ::= expr - nat | nat
 nat ::= 0 | 1 | 2 | ...
 -}
 
@@ -162,39 +160,27 @@ nat ::= 0 | 1 | 2 | ...
 
 expr3 :: Parser Int
 expr3 = do
-    t <- term3
-    do
-        _ <- symbol "+"
-        e <- expr3
-        return (t + e)
-        <|> do
-            e <- expr3
-            do
-                _ <- symbol "-"
-                t <- term3
-                return (e - t)
-                <|> term3
-
-
-term3 :: Parser Int
-term3 = do
-    f <- factor3
-    do
-        _ <- symbol "*"
-        t <- term3
-        return (f * t)
-        <|> return f
-
-factor3 :: Parser Int
-factor3 = do
-    _ <- symbol "("
     e <- expr3
-    _ <- symbol ")"
-    return e
-    <|> do
-        n <- natural
-        return n
+    _ <- symbol "-"
+    n <- natural
+    return (e - n)
+    <|> natural
 
+{- c. What is the problem with this parser?
+
+The problem is that the first statement call it self recursively an infinite
+number of times, causing the stuck of the function. -}
+
+{- d. Show how it can be fixed. Hint: rewrite the parser using the repetition
+primitive many and the library function foldl. -}
+
+expr3foldl :: Parser Int
+expr3foldl = do
+    n <- natural
+    ns <- many (do
+        _ <- symbol "-"
+        natural)
+    return (foldl (-) n ns)
 
 {- Exercise 4. Define an expression fibs :: [Integer] that generates the
 infinite sequence of Fibonacci numbers (0, 1, 1, 2, 3, 5, 8, 13, ...) using
@@ -212,4 +198,4 @@ main :: IO ()
 main = do
     print $ parse comment "-- super useful comment\n-- another one!\n"
     print $ parse expr "3*5+8*2/4"
-    print $ parse expr3 "8-3-2"
+    print $ parse expr3foldl "8-3-2"
