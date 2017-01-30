@@ -20,6 +20,20 @@
 
 \maketitle
 
+Before we start, let's prove the property \verb|[x] ++ ys = x:ys| which will be useful in some of the following exercises.
+
+\begin{proof} \verb|[x] ++ ys = x:ys|
+\begin{code}
+  [x] ++ ys
+=   { desugaring }
+  (x:[]) ++ ys
+=   { apply ++ }
+  x:([] ++ ys)
+=   { apply ++ }
+  x:ys
+\end{code}
+\end{proof}
+
 
 \begin{problem}{1}
 Using the definition
