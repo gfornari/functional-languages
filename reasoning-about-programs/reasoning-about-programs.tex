@@ -20,7 +20,7 @@
 
 \maketitle
 
-Before we start, let's prove the property \verb|[x] ++ ys = x:ys| which will be useful in some of the following exercises.
+Before we start, let's prove three properties which will be useful later on.
 
 \begin{proof} \verb|[x] ++ ys = x:ys|
 \begin{code}
@@ -34,6 +34,67 @@ Before we start, let's prove the property \verb|[x] ++ ys = x:ys| which will be 
 \end{code}
 \end{proof}
 
+
+\begin{proof}[First functor law for Maybe type]
+
+We want to show that \verb|fmap id = id| holds for the Maybe type.
+
+\verb|Nothing| case:
+
+\begin{code}
+  fmap id Nothing
+=   { apply fmap }
+  Nothing
+\end{code}
+
+\verb|Just x| case:
+
+\begin{code}
+  fmap id (Just x)
+=   { apply fmap }
+  Just (id x)
+=   { apply id }
+  Just x
+=   { unapply id }
+  id (Just x)
+\end{code}
+\end{proof}
+
+
+\begin{proof}[Second functor law for Maybe type]
+
+We want to show that \verb|fmap (g . f) = fmap g . fmap f| holds for the Maybe type.
+
+\verb |Nothing| case:
+
+\begin{code}
+  fmap (g . f) Nothing
+=   { apply fmap }
+  Nothing
+=   { unapply fmap f }
+  fmap f Nothing
+=   { unapply fmap g }
+  fmap g (fmap f Nothing)
+=   { unapply . }
+  (fmap g . fmap f) Nothing
+\end{code}
+
+\verb|Just x| case:
+
+\begin{code}
+  fmap (g . f) (Just x)
+=   { apply fmap }
+  Just ((g . f) x)
+=   { apply . }
+  Just (g (f x))
+=   { unapply fmap g }
+  fmap g (Just (f x))
+=   { unapply fmap f }
+  fmap g (fmap f (Just x))
+=   { unapply . }
+  (fmap g . fmap f) (Just x)
+\end{code}
+\end{proof}
 
 \begin{problem}{1}
 Using the definition
@@ -377,6 +438,8 @@ In the next case we assume that \verb|x|, \verb|y| and \verb|z| are \verb|Just|:
 =   { unapply first pure }
   (pure (.) <*> (Just x) <*> (Just y)) <*> (Just z)
 \end{code}
+
+The cases in which \verb|y| or \verb|z| are \verb|Nothing| are trivial because from both sides of the equation we reach in a few steps the value \verb|Nothing|.
 \end{proof}
 
 

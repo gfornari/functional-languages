@@ -250,8 +250,7 @@ seq_expr = do
     e <- expr
     es <- many (do
         _ <- symbol ","
-        ex <- expr
-        return ex)
+        expr)
     return (e:es)
 
 
@@ -298,7 +297,9 @@ prefixop :: Parser LKC
 prefixop = do
     _ <- symbol "cons"
     _ <- symbol "("
-    (e0:e1:_) <- seq_expr
+    e0 <- expr
+    _ <- symbol ","
+    e1 <- expr
     _ <- symbol ")"
     return (CONS e0 e1)
     <|> do
@@ -316,13 +317,17 @@ prefixop = do
     <|> do
         _ <- symbol "eq"
         _ <- symbol "("
-        (e0:e1:_) <- seq_expr
+        e0 <- expr
+        _ <- symbol ","
+        e1 <- expr
         _ <- symbol ")"
         return (Parser.EQ e0 e1)
     <|> do
         _ <- symbol "leq"
         _ <- symbol "("
-        (e0:e1:_) <- seq_expr
+        e0 <- expr
+        _ <- symbol ","
+        e1 <- expr
         _ <- symbol ")"
         return (LEQ e0 e1)
 

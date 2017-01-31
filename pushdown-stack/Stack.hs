@@ -17,8 +17,7 @@ push c s = ((), c:s)
 {- Checks whether a given string is correctly balanced with respect to
 the round parentheses. -}
 check_par :: [Char] -> Stack -> Bool
-check_par [] [] = True
-check_par [] _ = False -- TODO check this one
+check_par [] s = null s
 check_par (c:cs) s = case c of
     '(' -> check_par cs (snd (push ')' s))
     ')' -> check_par cs (snd (pop s))
